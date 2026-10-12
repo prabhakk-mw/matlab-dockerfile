@@ -83,8 +83,9 @@ ARG ADD_PROXY_DESKTOP_REPOS
 # matlab-proxy browser desktop requires. The Dockerfile detects whether the base image
 # uses apt-get (Ubuntu/Debian) or dnf/yum (RHEL family) and installs them accordingly.
 #
-# On apt-based images Xvfb and openbox are always installed. On RHEL-family images they
-# come from AppStream/CRB (Xvfb) and EPEL (openbox); these are available on Rocky Linux,
+# On apt-based images Xvfb and the fluxbox and openbox window managers are always
+# installed. On RHEL-family images they come from AppStream/CRB (Xvfb) and EPEL (openbox);
+# these are available on Rocky Linux,
 # AlmaLinux, CentOS Stream, and subscribed RHEL, but not on Red Hat UBI. The install is
 # best-effort, so a UBI image builds even when they are missing: command-line MATLAB and
 # -batch still work, only the matlab-proxy browser desktop is unavailable. To get the
@@ -96,7 +97,7 @@ RUN set -e; \
         export DEBIAN_FRONTEND=noninteractive; \
         apt-get update; \
         apt-get install --no-install-recommends --yes \
-            ca-certificates wget sudo xvfb openbox python3 python3-pip python3-venv pipx; \
+            ca-certificates wget sudo xvfb openbox fluxbox python3 python3-pip python3-venv pipx; \
         apt-get clean; \
         apt-get --yes autoremove; \
         rm -rf /var/lib/apt/lists/*; \

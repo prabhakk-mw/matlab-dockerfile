@@ -6,7 +6,7 @@ The workflow in this folder builds, tests, and publishes the prebuilt Linux ARM6
 
 These images do **not** embed MATLAB. Users pull an image and mount their own extracted MATLAB installation at run time, as described in the [alternate's README](../../alternates/matlab-linux-arm64/README.md).
 
-On the Red Hat UBI base images (`ubi9`, `ubi8`), the build logs a warning that `Xvfb` and `openbox` could not be installed. This is expected: those packages are not in the UBI repositories, so the published UBI images are command-line only. The build still succeeds, and command-line MATLAB and `-batch` work on these images. Users who need the browser desktop on UBI can build their own image with the `ADD_PROXY_DESKTOP_REPOS=true` build argument, as described in the [alternate's build README](../../alternates/matlab-linux-arm64/build/README.md#enable-the-matlab-proxy-desktop-on-red-hat-ubi).
+The Red Hat UBI base images (`ubi9`, `ubi8`) are command-line only: the build does not install matlab-proxy or its browser-desktop dependencies (`Xvfb` and a window manager) on them, because those packages are not available in the UBI repositories. Command-line MATLAB and `-batch` work on these images. matlab-proxy and the browser desktop are available on the Ubuntu and Debian images only.
 
 ## Triggers and Scheduled Jobs
 
@@ -35,7 +35,7 @@ Each job consists of the following steps:
 3. Compute the base image tag and the published image tag from the MATLAB release and operating system.
 4. Log in to ghcr.io, the GitHub Container Registry.
 5. Build the image locally, using the matching `matlab-deps-arm64` image as the base. The build context does not contain a MATLAB archive, so MATLAB is not embedded.
-6. Smoke-test the image: confirm that `matlab-proxy-app` is on the `PATH` and that the `matlab` launcher symlink is present.
+6. Smoke-test the image: confirm that the `matlab` launcher symlink is present and, on the Ubuntu and Debian images, that `matlab-proxy-app` is on the `PATH`. The UBI images are command-line only, so the `matlab-proxy-app` check is skipped for them.
 7. Push the image to the GitHub Container Registry if it passed the smoke test.
 
 ---

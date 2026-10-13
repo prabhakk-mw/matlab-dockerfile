@@ -90,17 +90,23 @@ jobs:
           tags: ${{ steps.tags.outputs.image }}
 
       # MATLAB is not embedded in these images, so there is nothing to license or run here.
-      # Verify that the parts this Dockerfile adds are in place: matlab-proxy-app is on the
-      # PATH and the "matlab" launcher symlink exists (it resolves once MATLAB is mounted).
+      # Verify that the parts this Dockerfile adds are in place: the "matlab" launcher
+      # symlink exists (it resolves once MATLAB is mounted) and, on the Ubuntu and Debian
+      # images, matlab-proxy-app is on the PATH. The Red Hat UBI images are command-line
+      # only and do not install matlab-proxy, so that check is skipped for them.
       - name: Smoke-test image
         env:
           IMAGE_NAME: ${{ steps.tags.outputs.image }}
+          OS_FLAVOR: ${{ matrix.os }}
         run: |
-          docker run --rm --entrypoint bash "${IMAGE_NAME}" -c '
+          docker run --rm --entrypoint bash "${IMAGE_NAME}" -c "
             set -eux
-            command -v matlab-proxy-app
             test -L /usr/local/bin/matlab
-          '
+            case '${OS_FLAVOR}' in
+              ubi*) echo 'UBI image: command-line only, skipping matlab-proxy-app check' ;;
+              *)    command -v matlab-proxy-app ;;
+            esac
+          "
           echo "Smoke test passed for ${IMAGE_NAME}"
 
       - name: Push the image to ghcr.io

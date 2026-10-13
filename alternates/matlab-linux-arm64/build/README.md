@@ -1,16 +1,16 @@
 # Build a MATLAB on Linux ARM64 Container Image
 
-> **Most beta users do not need this page.** The simplest way to try this offering is to pull a prebuilt image and mount your MATLAB installation into it &mdash; see the [main README](../README.md). Use the instructions here only if you need or want to **build your own image**, for example to embed MATLAB in a self-contained image, to build on a different base operating system, or to publish images to your own registry.
+> **Most beta users do not need this page.** The simplest way to try this offering is to pull a prebuilt image and mount your MATLAB installation into it &mdash; see the [main README](../README.md). Use the instructions here only if you need or want to **build your own image**, for example to embed MATLAB in a self-contained image or to publish images to your own registry.
 
-The [`Dockerfile`](../Dockerfile) in this folder builds a Docker&reg; image containing the Linux&reg; ARM64 build of MATLAB&reg;. Instead of installing MATLAB with the MATLAB Package Manager (*mpm*) or the installer, it unpacks a MATLAB `tar.gz` archive onto a prebuilt [MATLAB dependencies (matlab-deps)](https://github.com/mathworks-ref-arch/container-images/pkgs/container/container-images%2Fmatlab-deps-arm64) image, so the MATLAB operating-system dependencies are already present and you just pick the prebuilt base image that most closely matches your needs. The archive is embedded in the image, producing a self-contained image. By default, the image starts MATLAB in an interactive command-line prompt. The image also installs the [matlab-proxy](https://github.com/mathworks/matlab-proxy) Python&reg; package using [pipx](https://pipx.pypa.io/), so you can override the entrypoint to access the MATLAB desktop from a web browser.
+The [`Dockerfile`](../Dockerfile) in this folder builds a Docker&reg; image containing the Linux&reg; ARM64 build of MATLAB&reg;. Instead of installing MATLAB with the MATLAB Package Manager (*mpm*) or the installer, it unpacks a MATLAB `tar.gz` archive onto a prebuilt [MATLAB dependencies (matlab-deps)](https://github.com/mathworks-ref-arch/container-images/pkgs/container/container-images%2Fmatlab-deps-arm64) image, so the MATLAB operating-system dependencies are already present and you just pick the prebuilt base image that most closely matches your needs. The archive is embedded in the image, producing a self-contained image. The image runs `matlab` by default, so you can use it interactively on the command line or in `-batch` mode. See [Run Instructions](#run-instructions).
 
-Use this solution to run MATLAB on a machine with an ARM64 (`aarch64`) processor. The image runs as a Linux container, so the host operating system can be any platform whose Docker engine runs Linux ARM64 containers, including Linux, Windows on ARM, and Apple silicon Macs. On x86-64 hardware, use the [`Dockerfile`](../../../Dockerfile) in the top-level repository instead.
+Use this solution to run MATLAB on a machine with an ARM64 (`aarch64`) processor. The image runs as a Linux container, so the host operating system can be any platform whose Docker engine runs Linux ARM64 containers, including Linux, Windows on ARM, and Apple silicon Macs.
 
 ## Requirements
 
 * A machine with an ARM64 (`aarch64`) processor and a Docker engine that runs Linux ARM64 containers. The host operating system can be Linux, Windows on ARM, or an Apple silicon Mac; on Windows and macOS, use Docker Desktop, which runs Linux containers in a lightweight virtual machine.
 * A Docker environment with [BuildKit enabled](https://docs.docker.com/build/buildkit/#getting-started) (default in current Docker releases). The build uses a bind mount so that the large MATLAB archive never becomes a layer in the final image.
-* A working internet connection at build time. The build pulls the prebuilt matlab-deps base image from the GitHub Container Registry and installs matlab-proxy from the Python Package Index.
+* A working internet connection at build time, to pull the prebuilt matlab-deps base image from the GitHub Container Registry and the additional packages the build installs on top of it.
 * The MATLAB ARM64 archive for this offering is already licensed, so you do not need to configure a license to run MATLAB.
 
 ## Get the Files
@@ -72,25 +72,10 @@ docker build \
   -t matlab:r2026b-ubi9-arm64 .
 ```
 
-The prebuilt image already provides the MATLAB operating-system dependencies, so the build only adds the extra packages that matlab-proxy needs (Python and pipx), plus the `Xvfb` headless X server and the `openbox` window manager that the matlab-proxy browser desktop requires.
+The prebuilt image already provides the MATLAB operating-system dependencies, so the build adds only a few extra packages, and which ones depend on the base image:
 
-The matlab-proxy browser desktop needs `Xvfb` and `openbox`. On apt-based (Ubuntu/Debian) images these are always installed. On RHEL-family images they come from AppStream/CRB (`Xvfb`) and EPEL (`openbox`), which are available on Rocky Linux, AlmaLinux, CentOS Stream, and subscribed RHEL. If they cannot be installed, the build still succeeds and prints a warning: command-line MATLAB and `-batch` work, but the browser desktop does not. See [Enable the matlab-proxy Desktop on Red Hat UBI](#enable-the-matlab-proxy-desktop-on-red-hat-ubi) for the UBI case.
-
-### Enable the matlab-proxy Desktop on Red Hat UBI
-
-Red Hat UBI ships only a subset of the RHEL repositories, which does not include `Xvfb` or the `epel-release` package, so a UBI image built with the defaults is command-line only. To build a UBI image that supports the browser desktop, set the `ADD_PROXY_DESKTOP_REPOS` build argument to `true`:
-
-```bash
-docker build \
-  --build-arg BASE_IMAGE=ghcr.io/mathworks-ref-arch/container-images/matlab-deps-arm64:r2026b-ubi9 \
-  --build-arg ADD_PROXY_DESKTOP_REPOS=true \
-  -t matlab:r2026b-ubi9-arm64 .
-```
-
-With this argument, the build adds [EPEL](https://docs.fedoraproject.org/en-US/epel/) (for `openbox`) from its RPM URL and the [CentOS Stream](https://www.centos.org/centos-stream/) AppStream repository (for `Xvfb`), then installs both packages.
-
-> **Note**
-> This pulls the `Xvfb` package and its dependencies from CentOS Stream into a UBI-based image. Red Hat does not support mixing CentOS Stream packages into UBI, so use this option only if that trade-off is acceptable for your environment. On Ubuntu and Debian base images the browser desktop works without any extra arguments.
+* On Ubuntu and Debian base images, the build installs Python and pipx (for matlab-proxy), plus the `Xvfb` headless X server and the `fluxbox` and `openbox` window managers that the matlab-proxy browser desktop requires. These images support the browser desktop.
+* On Red Hat UBI base images, the build installs only `sudo` for the non-root `matlab` user. These images are **command-line only**: matlab-proxy and its browser-desktop dependencies (`Xvfb` and a window manager) are not installed, because those packages are not available in the Red Hat UBI repositories. Command-line MATLAB and `-batch` work the same as on the other images.
 
 ## Run Instructions
 
@@ -116,7 +101,7 @@ docker run --init --rm matlab:r2026b-ubuntu26.04-arm64 -batch ver
 
 ### Run the MATLAB Desktop in a Browser with matlab-proxy
 
-The image installs [matlab-proxy](https://github.com/mathworks/matlab-proxy), which serves the MATLAB desktop over HTTP. To use it, override the entrypoint with `matlab-proxy-app` and publish the matlab-proxy port.
+On Ubuntu and Debian images, [matlab-proxy](https://github.com/mathworks/matlab-proxy) serves the MATLAB desktop over HTTP. To use it, override the entrypoint with `matlab-proxy-app` and publish the matlab-proxy port.
 
 ```bash
 docker run --init -it --rm -p 8888:8888 \
@@ -135,7 +120,6 @@ The [Dockerfile](../Dockerfile) supports the following Docker build-time variabl
 | `MATLAB_RELEASE` | `R2026b` | The MATLAB release that the archive contains, in uppercase. For example: `R2026b`. |
 | `MATLAB_TGZ` | `MATLABR2026b_OpenBeta_aarch64_v3.0.tar.gz` | The filename of the MATLAB ARM64 archive in the `matlab-arm-image` folder. |
 | `PIP_INDEX_URL` | *unset* | A custom pip package index URL, for example a private PyPI mirror. Leave unset to install matlab-proxy from the public Python Package Index. |
-| `ADD_PROXY_DESKTOP_REPOS` | *unset* | RHEL-family images only. Set to `true` to add EPEL and CentOS Stream AppStream so the matlab-proxy desktop dependencies (`Xvfb` and `openbox`) install on bases that lack them, notably Red Hat UBI. See [Enable the matlab-proxy Desktop on Red Hat UBI](#enable-the-matlab-proxy-desktop-on-red-hat-ubi). No effect on apt-based images. |
 
 Use these arguments with the `docker build` command to customize your image. Alternatively, you can change the default values for these arguments directly in the [Dockerfile](../Dockerfile).
 

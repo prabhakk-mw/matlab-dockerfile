@@ -1,8 +1,8 @@
 # Run MATLAB on Linux ARM64 in a Container
 
-Run the Linux&reg; ARM64 build of MATLAB&reg; in a Docker&reg; container using a **prebuilt image**. You download MATLAB from the Open Beta, extract it, and mount it into a ready-to-run container &mdash; no image building required. The container starts MATLAB in a command-line prompt by default, and also includes [matlab-proxy](https://github.com/mathworks/matlab-proxy) so you can open the MATLAB desktop in a web browser.
+Run the Linux&reg; ARM64 build of MATLAB&reg; in a Docker&reg; container using a **prebuilt image**. You download MATLAB from the Open Beta, extract it, and mount it into a ready-to-run container &mdash; no image building required. The container starts MATLAB in a command-line prompt by default.
 
-This is the simplest way to try the Open Beta. If you would rather build your own image (for example, to embed MATLAB in a self-contained image or to use a different base operating system), see [Build Your Own Image](#build-your-own-image).
+This is the simplest way to try the Open Beta. If you would rather build your own image (for example, to embed MATLAB in a self-contained image), see [Build Your Own Image](#build-your-own-image).
 
 ## Requirements
 
@@ -50,7 +50,7 @@ Prebuilt images are published for several base operating systems, following the 
 | `r2026b-ubi9` | Red Hat&reg; UBI 9 | No |
 | `r2026b-ubi8` | Red Hat UBI 8 | No |
 
-Command-line MATLAB and `-batch` work on every image. The "Browser desktop" column indicates whether the prebuilt image also supports [running the MATLAB desktop in a browser with matlab-proxy](#run-the-matlab-desktop-in-a-browser-with-matlab-proxy). The prebuilt UBI images are command-line only, because the required `Xvfb` and `openbox` packages are not in the Red Hat UBI repositories. You can still enable the browser desktop on UBI by building your own image with those repositories added &mdash; see [Enable the matlab-proxy Desktop on Red Hat UBI](build/README.md#enable-the-matlab-proxy-desktop-on-red-hat-ubi).
+Command-line MATLAB and `-batch` work on every image. The "Browser desktop" column indicates whether the image also supports [running the MATLAB desktop in a browser with matlab-proxy](#run-the-matlab-desktop-in-a-browser-with-matlab-proxy). The Red Hat UBI images are command-line only and do not include matlab-proxy, because the `Xvfb` headless X server and window-manager packages that the browser desktop requires are not available in the Red Hat UBI repositories. For the browser desktop, use an Ubuntu or Debian image.
 
 Use the tag in place of `r2026b-ubuntu26.04` in the `docker run` commands, for example `ghcr.io/mathworks-ref-arch/matlab-dockerfile/matlab-arm64:r2026b-ubi9`.
 
@@ -66,10 +66,7 @@ docker run --init --rm \
 
 ## Run the MATLAB Desktop in a Browser with matlab-proxy
 
-The image includes [matlab-proxy](https://github.com/mathworks/matlab-proxy), which serves the MATLAB desktop over HTTP. To use it, override the entrypoint with `matlab-proxy-app` and publish the matlab-proxy port.
-
-> **Note**
-> The prebuilt Red Hat UBI images (`r2026b-ubi9`, `r2026b-ubi8`) are command-line only and do not include the browser desktop, because the required `Xvfb` and `openbox` packages are not in the UBI repositories. Use an Ubuntu or Debian image for the browser desktop, or build your own UBI image with the desktop enabled &mdash; see [Enable the matlab-proxy Desktop on Red Hat UBI](build/README.md#enable-the-matlab-proxy-desktop-on-red-hat-ubi).
+The Ubuntu and Debian images include [matlab-proxy](https://github.com/mathworks/matlab-proxy), which serves the MATLAB desktop over HTTP (the Red Hat UBI images are command-line only). To use it, override the entrypoint with `matlab-proxy-app` and publish the matlab-proxy port.
 
 ```bash
 docker run --init -it --rm -p 8888:8888 \
@@ -82,7 +79,7 @@ Open the URL that matlab-proxy prints in the terminal (by default `http://localh
 
 ## Build Your Own Image
 
-If you need or want to build the image yourself instead of using a prebuilt image &mdash; for example, to embed MATLAB in a self-contained image, to build on a different base operating system, or to publish images to your own registry &mdash; see [`build/README.md`](build/README.md).
+If you need or want to build the image yourself instead of using a prebuilt image &mdash; for example, to embed MATLAB in a self-contained image or to publish images to your own registry &mdash; see [`build/README.md`](build/README.md).
 
 ## More MATLAB Docker Resources
 For more MATLAB Docker resources, see [More MATLAB Docker Resources](../../README.md#more-matlab-docker-resources).

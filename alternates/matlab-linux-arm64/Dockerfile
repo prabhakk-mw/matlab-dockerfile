@@ -64,7 +64,7 @@ RUN --mount=type=bind,source=matlab-arm-image,target=/tmp/matlab-arm-image \
     && ln -s "${MATLAB_INSTALL_LOCATION}/bin/matlab" /usr/local/bin/matlab
 
 USER matlab
-WORKDIR /home/matlab
+WORKDIR /home/matlab/Documents/MATLAB
 
 # Opt out of user-experience data collection by removing this line (see README).
 ENV MW_DDUX_FORCE_ENABLE=true MW_CONTEXT_TAGS=MATLAB:ARM64:DOCKERFILE:V1

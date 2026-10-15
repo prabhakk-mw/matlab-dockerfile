@@ -25,7 +25,7 @@ matlab-arm-image/
 ## Notes
 
 - The archive is a complete MATLAB root. The Dockerfile extracts it directly into the
-  MATLAB install location (`/opt/matlab/<release>` by default).
+  MATLAB install location (`/opt/matlab`).
 - If the archive filename differs from the default, pass it to the build with
   `--build-arg MATLAB_TGZ=<filename>`.
 - The `.gitignore` in this folder keeps the archive out of version control. Only this

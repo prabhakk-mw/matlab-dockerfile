@@ -2,7 +2,7 @@
 
 Run the Linux&reg; ARM64 build of MATLAB&reg; in a Docker&reg; container using a **prebuilt image**. You download MATLAB from the Open Beta, extract it, and mount it into a ready-to-run container &mdash; no image building required. The container starts MATLAB in a command-line prompt by default.
 
-This is the simplest way to try the Open Beta. If you would rather build your own image (for example, to embed MATLAB in a self-contained image), see [Build Your Own Image](#build-your-own-image).
+This is the simplest way to try the Open Beta. If you would rather build your own image (for example, to embed MATLAB in a self-contained image or to publish images to your own registry), see [`build/README.md`](build/README.md).
 
 ## Requirements
 
@@ -15,24 +15,24 @@ Download the Linux ARM64 build of MATLAB (`tar.gz` archive) through the Open Bet
 
 ## Step 2: Extract MATLAB onto Your System
 
-Extract the archive into `/opt/matlab/R2026b` on the host. Using this path means the host and container paths match, which keeps the mount in the next step simple.
+Extract the archive into a dedicated folder on the host, for example `/opt/matlab/R2026b_OpenBeta`. Using a dedicated folder keeps the Beta separate from any other MATLAB installations on the host; you mount it into `/opt/matlab` inside the container in the next step.
 
 ```bash
-sudo mkdir -p /opt/matlab/R2026b
-sudo tar -xf MATLABR2026b_OpenBeta_aarch64_v3.0.tar.gz -C /opt/matlab/R2026b
+sudo mkdir -p /opt/matlab/R2026b_OpenBeta
+sudo tar -xf MATLABR2026b_OpenBeta_aarch64_v3.0.tar.gz -C /opt/matlab/R2026b_OpenBeta
 ```
 
 ## Step 3: Run the Container
 
-Run the prebuilt image and mount your extracted MATLAB at the same path inside the container. Docker pulls the image automatically the first time.
+Run the prebuilt image and mount your extracted MATLAB into `/opt/matlab` inside the container. Docker pulls the image automatically the first time.
 
 ```bash
 docker run --init -it --rm \
-  -v /opt/matlab/R2026b:/opt/matlab/R2026b \
+  -v /opt/matlab/R2026b_OpenBeta:/opt/matlab:ro \
   ghcr.io/mathworks-ref-arch/matlab-dockerfile/matlab-arm64:r2026b-ubuntu26.04
 ```
 
-This starts MATLAB in an interactive command-line prompt. Use the `--init` flag so that the container stops gracefully when a `docker stop` or `docker kill` command is issued. You can mount MATLAB read-only by appending `:ro` to the volume.
+This starts MATLAB in an interactive command-line prompt. Use the `--init` flag so that the container stops gracefully when a `docker stop` or `docker kill` command is issued.
 
 That is all you need to get up and running. The sections below show other ways to run the container.
 
@@ -47,7 +47,8 @@ Prebuilt images are published for several base operating systems, following the 
 | `r2026b-ubuntu22.04` | Ubuntu 22.04 | Yes |
 | `r2026b-debian13` | Debian 13 | Yes |
 | `r2026b-debian12` | Debian 12 | Yes |
-| `r2026b-ubi9` | Red Hat&reg; UBI 9 | No |
+| `r2026b-ubi10` | Red Hat&reg; UBI 10 | No |
+| `r2026b-ubi9` | Red Hat UBI 9 | No |
 | `r2026b-ubi8` | Red Hat UBI 8 | No |
 
 Command-line MATLAB and `-batch` work on every image. The "Browser desktop" column indicates whether the image also supports [running the MATLAB desktop in a browser with matlab-proxy](#run-the-matlab-desktop-in-a-browser-with-matlab-proxy). The Red Hat UBI images are command-line only and do not include matlab-proxy, because the `Xvfb` headless X server and window-manager packages that the browser desktop requires are not available in the Red Hat UBI repositories. For the browser desktop, use an Ubuntu or Debian image.
@@ -60,7 +61,7 @@ The image uses `matlab` as its entrypoint, so arguments you pass to `docker run`
 
 ```bash
 docker run --init --rm \
-  -v /opt/matlab/R2026b:/opt/matlab/R2026b \
+  -v /opt/matlab/R2026b_OpenBeta:/opt/matlab:ro \
   ghcr.io/mathworks-ref-arch/matlab-dockerfile/matlab-arm64:r2026b-ubuntu26.04 -batch ver
 ```
 
@@ -70,16 +71,12 @@ The Ubuntu and Debian images include [matlab-proxy](https://github.com/mathworks
 
 ```bash
 docker run --init -it --rm -p 8888:8888 \
-  -v /opt/matlab/R2026b:/opt/matlab/R2026b \
+  -v /opt/matlab/R2026b_OpenBeta:/opt/matlab:ro \
   --entrypoint matlab-proxy-app \
   ghcr.io/mathworks-ref-arch/matlab-dockerfile/matlab-arm64:r2026b-ubuntu26.04
 ```
 
 Open the URL that matlab-proxy prints in the terminal (by default `http://localhost:8888`) in a browser to access the MATLAB desktop.
-
-## Build Your Own Image
-
-If you need or want to build the image yourself instead of using a prebuilt image &mdash; for example, to embed MATLAB in a self-contained image or to publish images to your own registry &mdash; see [`build/README.md`](build/README.md).
 
 ## More MATLAB Docker Resources
 For more MATLAB Docker resources, see [More MATLAB Docker Resources](../../README.md#more-matlab-docker-resources).

@@ -44,7 +44,7 @@ The examples tag images as `matlab:<release>-<base>-<arch>`, for example `matlab
 
 ### Build on the default base image
 
-By default, the Dockerfile builds on the prebuilt matlab-deps image `ghcr.io/mathworks-ref-arch/container-images/matlab-deps-arm64:r2026b-ubuntu26.04`.
+By default, the Dockerfile builds on the prebuilt matlab-deps image `ghcr.io/mathworks-ref-arch/container-images/matlab-deps-arm64:R2026b-ubuntu26.04`.
 
 ```bash
 docker build -t matlab:r2026b-ubuntu26.04-arm64 .
@@ -52,24 +52,23 @@ docker build -t matlab:r2026b-ubuntu26.04-arm64 .
 
 ### Choose a different base image
 
-To build on a different operating system, set `BASE_IMAGE` to the matlab-deps-arm64 tag that most closely matches your needs. The available tags are published in the [matlab-deps-arm64 package](https://github.com/mathworks-ref-arch/container-images/pkgs/container/container-images%2Fmatlab-deps-arm64). For MATLAB R2026b, the tags include:
+The Dockerfile builds on a prebuilt matlab-deps-arm64 base image. To build on a different operating system, set the `OS` build argument to one of the operating systems published in the [matlab-deps-arm64 package](https://github.com/mathworks-ref-arch/container-images/pkgs/container/container-images%2Fmatlab-deps-arm64):
 
-| `BASE_IMAGE` tag | Operating system |
+| `OS` | Operating system |
 |---|---|
-| `r2026b-ubuntu26.04` (default) | Ubuntu 26.04 |
-| `r2026b-ubuntu24.04` | Ubuntu 24.04 |
-| `r2026b-ubuntu22.04` | Ubuntu 22.04 |
-| `r2026b-debian13` | Debian 13 |
-| `r2026b-debian12` | Debian 12 |
-| `r2026b-ubi9` | Red Hat&reg; UBI 9 |
-| `r2026b-ubi8` | Red Hat UBI 8 |
+| `ubuntu26.04` (default) | Ubuntu 26.04 |
+| `ubuntu24.04` | Ubuntu 24.04 |
+| `ubuntu22.04` | Ubuntu 22.04 |
+| `debian13` | Debian 13 |
+| `debian12` | Debian 12 |
+| `ubi10` | Red Hat&reg; UBI 10 |
+| `ubi9` | Red Hat UBI 9 |
+| `ubi8` | Red Hat UBI 8 |
 
 For example, to build on Red Hat UBI 9:
 
 ```bash
-docker build \
-  --build-arg BASE_IMAGE=ghcr.io/mathworks-ref-arch/container-images/matlab-deps-arm64:r2026b-ubi9 \
-  -t matlab:r2026b-ubi9-arm64 .
+docker build --build-arg OS=ubi9 -t matlab:r2026b-ubi9-arm64 .
 ```
 
 The prebuilt image already provides the MATLAB operating-system dependencies, so the build adds only a few extra packages, and which ones depend on the base image:
@@ -116,8 +115,7 @@ The [Dockerfile](../Dockerfile) supports the following Docker build-time variabl
 
 | Argument Name | Default value | Effect |
 |---|---|---|
-| `BASE_IMAGE` | `ghcr.io/mathworks-ref-arch/container-images/matlab-deps-arm64:r2026b-ubuntu26.04` | The prebuilt matlab-deps base image for the container. Set this to the [matlab-deps-arm64](https://github.com/mathworks-ref-arch/container-images/pkgs/container/container-images%2Fmatlab-deps-arm64) tag that matches your needs. See [Choose a different base image](#choose-a-different-base-image). |
-| `MATLAB_RELEASE` | `R2026b` | The MATLAB release that the archive contains, in uppercase. For example: `R2026b`. |
+| `OS` | `ubuntu26.04` | The operating system of the matlab-deps-arm64 base image. See [Choose a different base image](#choose-a-different-base-image). |
 | `MATLAB_TGZ` | `MATLABR2026b_OpenBeta_aarch64_v3.0.tar.gz` | The filename of the MATLAB ARM64 archive in the `matlab-arm-image` folder. |
 | `PIP_INDEX_URL` | *unset* | A custom pip package index URL, for example a private PyPI mirror. Leave unset to install matlab-proxy from the public Python Package Index. |
 
